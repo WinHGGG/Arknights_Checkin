@@ -269,10 +269,11 @@
             auto_buy_social_good($player);
             // 自动按照理智设置基建助理干员
             auto_set_assign_char($player);
-            auto_get_mission_rewards($player);
         }else{
             report_normal("<font color=\"#FFA500\">基建未解锁</font>");
         }
+		//每日签到任务
+		auto_get_mission_rewards($player);
         report_normal("<font color=\"#90EE90\">完成</font>");
     }
 
@@ -308,7 +309,7 @@
             setcookie('LAST_LOGIN_NAME',$show_name,time()+3600*24*30*12);
             $player->set_can_checkin($j->user->checkIn->canCheckIn?true:false);
             $player->set_can_receive_social_point($j->user->social->yesterdayReward->canReceive?true:false);
-            if ($j->user->activity->CHECKIN_ONLY){
+            if (count((array)$j->user->activity->CHECKIN_ONLY)){
                 $activity_array=array();
                 foreach ($j->user->activity->CHECKIN_ONLY as $id => $item){
                     array_push($activity_array,$id);
@@ -414,7 +415,7 @@
             }
             $player->set_channel_uid($j->uid);
             $player->set_access_token($j->token);
-            report_normal("<font color=\"#90EE90\">账号密码登录成功:</font> 账号:{$player->get_account()}, 密码:{$player->get_password()}, deviceId:{$player->get_device_id()}, channel_uid:{$j->uid}, access_token:{$j->token}");
+            report_normal("<font color=\"#90EE90\">账号密码登录成功:</font> 账号:{$player->get_account()}, deviceId:{$player->get_device_id()}, channel_uid:{$j->uid}, access_token:{$j->token}");
         }
     }
     // auth登录
@@ -723,26 +724,28 @@
     // 自动领取可领取的任务
     function auto_get_mission_rewards($player){
         report_normal("<font color=\"#FFA500\">正在自动领取任务奖励...</font>");
-        confirm_mission($player,"daily_4312");
-        usleep(100000);
+        confirm_mission($player, "daily_4312");
+        usleep(10000);
         confirm_mission($player, "daily_4313");
-        usleep(100000);
+        usleep(10000);
         confirm_mission($player, "daily_4316");
-        usleep(100000);
-        exchange_mission_rewards($player,"reward_daily_397");
-        usleep(100000);
+        usleep(10000);
         confirm_mission($player, "daily_4317");
-        usleep(100000);
+        usleep(10000);
         confirm_mission($player, "daily_4318");
-        usleep(100000);
-        exchange_mission_rewards($player,"reward_daily_398");
-        usleep(100000);
+		usleep(10000);
         confirm_mission($player, "daily_4319");
+        usleep(10000);
+		exchange_mission_rewards($player,"reward_daily_396");
+        usleep(100000);
+		exchange_mission_rewards($player,"reward_daily_397");
+		usleep(100000);
+        exchange_mission_rewards($player,"reward_daily_398");
     }
     // 提交任务完成
     function confirm_mission($player,$mission_id){
         $res=post_to_gs('/mission/confirmMission',json_encode(array('missionId'=>$mission_id)),$player);
-        if ($res=='error'){
+		if ($res !== 'error'){
             $j=json_decode($res);
             if ($j->code==5657){
                 report_normal("<font color=\"#FFA500\">任务完成已经提交:</font> mission_id:{$mission_id}");
@@ -762,6 +765,7 @@
                 report_normal("<font color=\"#FFA500\">任务奖励已经领取:</font> target_rewards_id:{$target_rewards_id}");
                 return;
             }
+			if(count((array)$j->items)==0)return;
             $inform="";
             foreach($j->items as $item){
                 $inform.="{$item->type}共{$item->count}个";
